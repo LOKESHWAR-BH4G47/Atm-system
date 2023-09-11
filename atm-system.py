@@ -1,96 +1,113 @@
 import random
-import sys
- 
-class ATM():
-    def __init__(self, name, account_number, balance = 0):
+import tkinter as tk
+from tkinter import messagebox
+
+class ATM:
+    def __init__(self, name, account_number, balance=0):
         self.name = name
         self.account_number = account_number
         self.balance = balance
-         
+
     def account_detail(self):
-        print("\n----------ACCOUNT DETAIL----------")
-        print(f"Account Holder: {self.name.upper()}")
-        print(f"Account Number: {self.account_number}")
-        print(f"Available balance: Nu.{self.balance}\n")
-         
+        messagebox.showinfo("Account Detail", f"Account Holder: {self.name.upper()}\nAccount Number: {self.account_number}\nAvailable Balance: Nu.{self.balance:.2f}")
+
     def deposit(self, amount):
-        self.amount = amount
-        self.balance = self.balance + self.amount
-        print("Current account balance: Nu.", self.balance)
-        print()
- 
-    def withdraw(self, amount):
-        self.amount = amount
-        if self.amount > self.balance:
-            print("Insufficient fund!")
-            print(f"Your balance is Nu.{self.balance} only.")
-            print("Try with lesser amount than balance.")
-            print()
+        if amount > 0:
+            self.balance += amount
+            self.update_balance_label()
+            messagebox.showinfo("Deposit", f"Nu.{amount:.2f} deposited successfully!\nCurrent Balance: Nu.{self.balance:.2f}")
         else:
-            self.balance = self.balance - self.amount
-            print(f"Nu.{amount} withdrawal successful!")
-            print("Current account balance: Nu.", self.balance)
-            print()
- 
-    def check_balance(self):
-        print("Available balance: Nu.", self.balance)
-        print()
- 
-    def transaction(self):
-        print("""
-            TRANSACTION 
-        *********************
-            Menu:
-            1. Account Detail
-            2. Check Balance
-            3. Deposit
-            4. Withdraw
-            5. Exit
-        *********************
-        """)
-        
-        while True:
-            try:
-                option = int(input("Enter 1, 2, 3, 4 or 5:"))
-            except:
-                print("Error: Enter 1, 2, 3, 4, or 5 only!\n")
-                continue
+            messagebox.showerror("Invalid Amount", "Please enter a valid deposit amount.")
+
+    def withdraw(self, amount):
+        if amount > 0:
+            if amount <= self.balance:
+                self.balance -= amount
+                self.update_balance_label()
+                messagebox.showinfo("Withdrawal", f"Nu.{amount:.2f} withdrawn successfully!\nCurrent Balance: Nu.{self.balance:.2f}")
             else:
-                if option == 1:
-                    atm.account_detail()
-                elif option == 2:
-                    atm.check_balance()
-                elif option == 3:
-                    amount = int(input("How much you want to deposit(Nu.):"))
-                    atm.deposit(amount)
-                elif option == 4:
-                    amount = int(input("How much you want to withdraw(Nu.):"))
-                    atm.withdraw(amount)
-                elif option == 5:
-                    print(f"""
-                printing receipt..............
-          ******************************************
-              Transaction is now complete.                         
-              Transaction number: {random.randint(10000, 1000000)} 
-              Account holder: {self.name.upper()}                  
-              Account number: {self.account_number}                
-              Available balance: Nu.{self.balance}                    
- 
-              Thanks for choosing us as your bank                  
-          ******************************************
-          """)
-                    sys.exit()
-                 
- 
+                messagebox.showerror("Insufficient Funds", f"Insufficient funds!\nYour balance is Nu.{self.balance:.2f}")
+        else:
+            messagebox.showerror("Invalid Amount", "Please enter a valid withdrawal amount.")
+
+    def check_balance(self):
+        messagebox.showinfo("Balance", f"Available Balance: Nu.{self.balance:.2f}")
+
+    def transaction(self):
+        root = tk.Tk()
+        root.title("ATM Transaction")
+
+        def show_account_detail():
+            self.account_detail()
+
+        def show_balance():
+            self.check_balance()
+
+        def deposit_funds():
+            amount_str = amount_entry.get()
+            if amount_str.strip().replace(".", "").isdigit():
+                 amount = float(amount_str)
+                 self.deposit(amount)
+            else:
+                 messagebox.showerror("Invalid Amount", "Please enter a valid amount.")
+
+
+        def withdraw_funds():
+            try:
+                amount = float(amount_entry.get())
+                self.withdraw(amount)
+            except ValueError:
+                messagebox.showerror("Invalid Amount", "Please enter a valid amount.")
+
+        root.geometry("400x400")
+
+        title_label = tk.Label(root, text="Welcome to Bank of Bhutan", font=("Helvetica", 16))
+        title_label.pack(pady=10)
+
+        detail_button = tk.Button(root, text="Account Detail", command=show_account_detail)
+        detail_button.pack(pady=10)
+
+        balance_button = tk.Button(root, text="Check Balance", command=show_balance)
+        balance_button.pack(pady=10)
+
+        deposit_label = tk.Label(root, text="Enter deposit amount (Nu.):")
+        deposit_label.pack()
+        amount_entry = tk.Entry(root)
+        amount_entry.pack()
+        deposit_button = tk.Button(root, text="Deposit", command=deposit_funds)
+        deposit_button.pack()
+
+        withdraw_label = tk.Label(root, text="Enter withdrawal amount (Nu.):")
+        withdraw_label.pack()
+        amount_entry = tk.Entry(root)
+        amount_entry.pack()
+        withdraw_button = tk.Button(root, text="Withdraw", command=withdraw_funds)
+        withdraw_button.pack()
+
+        balance_label = tk.Label(root, text="Current Balance:", font=("Helvetica", 12))
+        balance_label.pack(pady=10)
+        balance_value_label = tk.Label(root, text=f"Nu.{self.balance:.2f}", font=("Helvetica", 12))
+        balance_value_label.pack()
+
+        exit_button = tk.Button(root, text="Exit", command=root.quit)
+        exit_button.pack(pady=10)
+
+        def update_balance_label():
+            balance_value_label.config(text=f"Nu.{self.balance:.2f}")
+
+        self.update_balance_label = update_balance_label
+
+        root.mainloop()
+
 print("*******WELCOME TO BANK OF BHUTAN*******")
 print("___________________________________________________________\n")
 print("----------ACCOUNT CREATION----------")
 name = input("Enter your name: ")
 account_number = input("Enter your account number: ")
 print("Congratulations! Account created successfully......\n")
- 
+
 atm = ATM(name, account_number)
- 
+
 while True:
     trans = input("Do you want to do any transaction?(y/n):")
     if trans == "y":
@@ -104,5 +121,4 @@ while True:
         """)
         break
     else:
-        print("Wrong command!  Enter 'y' for yes and 'n' for NO.\n")
-    
+        print("Wrong command! Enter 'y' for yes and 'n' for NO.\n")

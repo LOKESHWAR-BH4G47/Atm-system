@@ -39,7 +39,7 @@ class ATM:
         pin = self.pin_entry.get()
 
         # Check if the account number and PIN are valid
-        if account_number in account_data and account_data[account_number]["pin"] == pin :
+        if account_number in account_data and account_data[account_number]["pin"] == pin:
             self.account_number = account_number  # Store the authenticated account number
             self.login_window.destroy()
             self.create_main_window()
@@ -82,6 +82,9 @@ class ATM:
         def show_transfer_history():
             self.view_transfer_history()
 
+        def open_transfer_window():
+            self.create_transfer_window()
+
         # Create a frame to group widgets
         frame = tk.Frame(self.main_window, bg='#1f2833', padx=10, pady=10)
         frame.pack()
@@ -102,8 +105,6 @@ class ATM:
         check_balance_button = tk.Button(account_frame, text="Check Balance", relief='raised', command=show_balance, padx=20, bg='#1f2833', fg='white')
         check_balance_button.pack(side='left', padx=10)
 
-        
-
         # Create a frame for transaction-related widgets
         transaction_frame = tk.Frame(frame, bg='#1f2833')
         transaction_frame.pack(padx=10, pady=10)
@@ -122,9 +123,7 @@ class ATM:
         withdraw_amount_entry.pack()
 
         withdraw_button = tk.Button(transaction_frame, text="Withdraw", relief='raised', command=withdraw_funds, bg='red', fg='white')
-        withdraw_button.pack( pady=10,padx=10)
-
-        
+        withdraw_button.pack(pady=10, padx=10)
 
         # Create a frame for current balance
         balance_frame = tk.Frame(frame, bg='#1f2833')
@@ -136,13 +135,17 @@ class ATM:
         self.balance_value_label = tk.Label(balance_frame, text=f"₹.{account_data[self.account_number]['balance']:.2f}", font=("Helvetica", 12), bg='#1f2833', fg='white')
         self.balance_value_label.pack()
 
+        
+
+        transfer_button = tk.Button(frame, text="Transfer", relief='raised', command=open_transfer_window, bg='#1f2833', fg='white')
+        transfer_button.pack( padx=10)
+        
         # Create a frame for exit button
         exit_frame = tk.Frame(frame, bg='#1f2833')
         exit_frame.pack()
 
         exit_button = tk.Button(exit_frame, text="Exit", relief='raised', command=self.main_window.destroy, bg='#1f2833', fg='white')
         exit_button.pack(pady=10)
-
 
     def account_detail(self):
         # Retrieve account details from the account_data dictionary
@@ -165,6 +168,61 @@ class ATM:
             messagebox.showinfo("Deposit", f"₹.{amount:.2f} deposited successfully!\nCurrent Balance: ₹.{account_data[self.account_number]['balance']:.2f}")
         else:
             messagebox.showerror("Invalid Amount", "Please enter a valid deposit amount.")
+
+    def create_transfer_window(self):
+        self.transfer_window = tk.Tk()
+        self.transfer_window.title("Transfer Funds")
+        self.transfer_window.configure(bg='#2a1b3d')
+
+        transfer_label = tk.Label(self.transfer_window, text="Transfer Funds", font=("Helvetica", 16, "bold"), bg='#2a1b3d', fg='white')
+        transfer_label.pack(pady=10)
+
+        recipient_label = tk.Label(self.transfer_window, text="Recipient's Account Number:", bg='#2a1b3d', fg='white')
+        recipient_label.pack()
+        recipient_entry = tk.Entry(self.transfer_window, bg='#a4b3b6', fg='black', borderwidth=5)
+        recipient_entry.pack()
+
+        amount_label = tk.Label(self.transfer_window, text="Enter transfer amount (₹.):", bg='#2a1b3d', fg='white')
+        amount_label.pack()
+        amount_entry = tk.Entry(self.transfer_window, bg='#a4b3b6', fg='black', borderwidth=5)
+        amount_entry.pack()
+
+        transfer_button = tk.Button(self.transfer_window, text="Transfer", relief='raised', command=lambda: self.transfer_funds(recipient_entry.get(), amount_entry.get()), bg='#1f2833', fg='white')
+        transfer_button.pack(pady=10)
+
+    def transfer_funds(self, to_account, amount_str):
+        try:
+            amount = float(amount_str)
+        except ValueError:
+            messagebox.showerror("Invalid Amount", "Please enter a valid amount.")
+            return
+
+        if amount > 0:
+            if to_account in account_data:
+                if amount <= account_data[self.account_number]["balance"]:
+                    # Update the balance in the sender's account_data
+                    account_data[self.account_number]["balance"] -= amount
+                    self.update_balance_label()
+
+                    # Update the balance in the recipient's account_data
+                    account_data[to_account]["balance"] += amount
+
+                    # Record the transfer in transfer history for both accounts
+                    if self.account_number not in transfer_history:
+                        transfer_history[self.account_number] = []
+                    if to_account not in transfer_history:
+                        transfer_history[to_account] = []
+
+                    transfer_history[self.account_number].append(f"Transferred ₹.{amount:.2f} to {to_account}")
+                    transfer_history[to_account].append(f"Received ₹.{amount:.2f} from {self.account_number}")
+
+                    messagebox.showinfo("Transfer", f"₹.{amount:.2f} transferred to {to_account} successfully!\nCurrent Balance: ₹.{account_data[self.account_number]['balance']:.2f}")
+                else:
+                    messagebox.showerror("Insufficient Funds", f"Insufficient funds!\nYour balance is ₹.{account_data[self.account_number]['balance']:.2f}")
+            else:
+                messagebox.showerror("Invalid Account", "The recipient account does not exist.")
+        else:
+            messagebox.showerror("Invalid Amount", "Please enter a valid transfer amount.")
 
     def withdraw(self, amount):
         if amount > 0:
@@ -200,24 +258,7 @@ class ATM:
     def update_balance_label(self):
         self.balance_value_label.config(text=f"₹.{account_data[self.account_number]['balance']:.2f}")
 
-    def run_transaction(self):
-        self.main_window.mainloop()
-
 print("*******WELCOME TO BANK OF STUDENTS*******")
 
 atm = ATM()
-
-while True:
-    trans = input("Do you want to do any transaction?(y/n):")
-    if trans == "y":
-        atm.run_transaction()
-    elif trans == "n":
-        print("""
-    -------------------------------------
-   | Thanks for choosing us as your bank |
-   | Visit us again!                     |
-    -------------------------------------
-        """)
-        break
-    else:
-        print("Wrong command! Enter 'y' for yes and 'n' for NO.\n")
+tk.mainloop()

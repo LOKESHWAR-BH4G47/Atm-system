@@ -42,7 +42,7 @@ cd atm-system
 1.Run the atm.py script to start the ATM system:
 
 ```bash
-python atm.py
+python atm-system.py
 ```
 2.Follow the on-screen instructions to use the ATM system.
 
